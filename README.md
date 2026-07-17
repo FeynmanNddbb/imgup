@@ -1,14 +1,33 @@
-# imgup 🖼️
-
 <div align="center">
 
-**轻量级自托管图片上传服务**
+# imgup 🖼️
 
-零依赖 · 日期归档 · 跨平台客户端
+### 轻量级自托管图片上传服务
 
-[![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)]()
+**零依赖** · **日期归档** · **跨平台客户端**
+
+[![Python](https://img.shields.io/badge/Python-3.6+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey?style=flat)]()
+[![GitHub Stars](https://img.shields.io/github/stars/FeynmanNddbb/imgup?style=flat)](https://github.com/FeynmanNddbb/imgup/stargazers)
+
+<br>
+
+纯 Python 标准库实现，无需任何第三方依赖  
+自动按日期归档，配合 Web 服务器即可对外提供访问
+
+<br>
+
+```bash
+上传 photo.jpg  →  https://images.example.com/2026-07-17/photo.jpg
+```
+
+<br>
+
+[📦 快速开始](#-快速开始) · 
+[📖 文档](#-简介) · 
+[🖥️ Windows 客户端](#客户端配置) · 
+[⚙️ 配置](#️-配置)
 
 </div>
 
@@ -16,11 +35,7 @@
 
 ## 📖 简介
 
-imgup 是一个纯 Python 标准库实现的图片上传服务，无需任何第三方依赖。上传的图片自动按日期归档到 `YYYY-MM-DD/` 文件夹，配合 Caddy 或 Nginx 即可对外提供访问。
-
-```
-上传 photo.jpg  →  https://images.example.com/2026-07-17/photo.jpg
-```
+imgup 是一个纯 Python 标准库实现的图片上传服务。上传的图片自动按日期归档到 `YYYY-MM-DD/` 文件夹，提供简单的 Token 认证，支持多种客户端访问方式。
 
 ## ✨ 特性
 
