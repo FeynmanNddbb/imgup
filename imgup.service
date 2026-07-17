@@ -1,0 +1,27 @@
+[Unit]
+Description=imgup - Lightweight Image Upload Server
+Documentation=https://github.com/yourusername/imgup
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/imgup
+
+# Environment variables
+Environment=UPLOAD_DIR=/data/images
+Environment=UPLOAD_TOKEN=change_me_please
+Environment=BASE_URL=https://images.example.com
+Environment=PORT=8765
+Environment=MAX_SIZE_MB=20
+
+ExecStart=/usr/bin/python3 /opt/imgup/server.py
+Restart=on-failure
+RestartSec=5
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
