@@ -36,6 +36,22 @@ def get_exe_dir():
         return os.path.dirname(os.path.abspath(__file__))
 
 
+def get_resource_path(filename):
+    """Return a bundled resource path in development or PyInstaller builds."""
+    base_dir = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_dir, filename)
+
+
+def set_window_icon(window):
+    """Apply the bundled application logo to a Tk window."""
+    try:
+        icon = tk.PhotoImage(file=get_resource_path("imgup.png"))
+        window.iconphoto(True, icon)
+        window._imgup_icon = icon
+    except (OSError, tk.TclError):
+        pass
+
+
 def get_config_path():
     """获取配置文件完整路径"""
     return os.path.join(get_exe_dir(), CONFIG_FILE)
@@ -479,10 +495,7 @@ def main():
 
     # 启动主界面
     root = tk.Tk()
-    try:
-        root.iconbitmap(default="")
-    except Exception:
-        pass
+    set_window_icon(root)
 
     UploadApp(root, config)
     root.mainloop()

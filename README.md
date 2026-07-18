@@ -1,79 +1,60 @@
 <div align="center">
+  <img src="./imgup.png" alt="imgup logo" width="150">
 
 # imgup
 
-### 轻量、安全、完全自托管的图片上传服务
+### 一次安装配置，永久便捷上传的自托管图床
 
-把本地图片一键上传到自己的服务器，并生成稳定可分享的 HTTPS 图片链接。
+把图片上传到自己的服务器，返回稳定可长期引用的 HTTPS 链接。适合博客、Markdown、知识库、团队文档、截图分享和自动化脚本调用。
 
-<br>
-
-[![Python](https://img.shields.io/badge/Python-3.6+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org)
-[![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat)](LICENSE)
-[![Client](https://img.shields.io/badge/Client-Windows%20%7C%20Linux%20%7C%20macOS-6366f1?style=flat)]()
-[![GitHub Stars](https://img.shields.io/github/stars/FeynmanNddbb/imgup?style=flat&logo=github)](https://github.com/FeynmanNddbb/imgup/stargazers)
-
-<br>
+[![Python](https://img.shields.io/badge/Python-3.6+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![Client](https://img.shields.io/badge/Client-Windows%20%7C%20Linux%20%7C%20macOS-6366f1?style=for-the-badge)]()
+[![Self Hosted](https://img.shields.io/badge/Self--Hosted-Yes-0ea5e9?style=for-the-badge)]()
 
 ```text
-photo.jpg  ->  imgup  ->  https://images.example.com/2026-07-18/photo.jpg
+本地图片  ->  imgup  ->  https://images.example.com/2026-07-18/photo.jpg
 ```
 
-<br>
-
-[部署流程](#部署流程) ·
+[快速开始](#快速开始) ·
 [客户端使用](#客户端使用) ·
 [配置参考](#配置参考) ·
 [API](#api-参考) ·
-[排查](#常见问题)
+[常见问题](#常见问题)
 
 </div>
 
 ---
 
-## 项目定位
+## 为什么用 imgup
 
-imgup 是一个私有图床服务。图片存储在你的服务器上，上传接口通过 Token 保护，图片链接公开可访问，适合博客、Markdown 文档、团队资料、截图分享和轻量内容站点。
+imgup 是一个轻量、安全、完全自托管的图片上传服务。服务端只依赖 Python 标准库，客户端覆盖 Windows、Linux 和 macOS，配置一次后就能长期稳定上传。
 
-**核心特性**
-
-| 能力 | 说明 |
+| 优点 | 说明 |
 | --- | --- |
-| 自托管存储 | 图片保存到自己的服务器目录，例如 `/data/images` |
-| Token 上传鉴权 | 只有携带正确 `X-Upload-Token` 的请求可以上传 |
-| 自动日期归档 | 图片按 `YYYY-MM-DD/` 分目录保存 |
-| 防重名覆盖 | 同名文件自动追加短 hash |
-| 零服务端依赖 | 服务端只依赖 Python 3 标准库 |
-| 自动反向代理配置 | 安装脚本优先适配 Caddy，其次 Nginx、Apache |
-| 多平台客户端 | Windows GUI、Linux/macOS 命令行、curl/API |
+| 一次安装配置 | 服务端安装脚本自动配置 systemd、存储目录、Token 和反向代理 |
+| 永久便捷上传 | Windows 双击上传，Linux/macOS 使用 `imgup photo.jpg`，无需每次填写 URL 和 Token |
+| 稳定调用 | 上传接口固定、返回 JSON 稳定，适合脚本、CI、Markdown 工具和截图工作流 |
+| 中文路径友好 | 客户端按文件原路径提交，支持中文文件名、中文目录和带空格路径 |
+| 自托管存储 | 图片保存在自己的服务器目录，例如 `/data/images`，数据不托管给第三方 |
+| Token 鉴权 | 只有携带正确 `X-Upload-Token` 的请求可以上传 |
+| 自动日期归档 | 图片按 `YYYY-MM-DD/` 分目录保存，链接清晰可维护 |
+| 防重名覆盖 | 同名文件自动追加短 hash，避免覆盖历史图片 |
+| 多平台客户端 | Windows GUI、Linux/macOS 命令行、curl/API 都可用 |
 
 ---
 
-## 部署流程
-
-推荐按这个顺序操作：
-
-```text
-准备域名 -> 添加 DNS 解析 -> 安装服务端 -> 配置客户端 -> 上传验证
-```
+## 快速开始
 
 ### 1. 准备域名
 
-建议使用一个独立子域名作为图床域名，例如：
-
-```text
-images.example.com
-img.example.com
-pic.example.com
-```
-
-用户输入域名时不需要带 `https://`。安装脚本和客户端都会自动补全：
+准备一个独立子域名作为图床域名：
 
 ```text
 images.example.com
 ```
 
-会被规范化为：
+输入域名时不需要带 `https://`。安装脚本和客户端都会自动补全为：
 
 ```text
 https://images.example.com/upload
@@ -81,21 +62,17 @@ https://images.example.com/upload
 
 ### 2. 添加 DNS 解析
 
-在你的域名服务商后台添加一条 `A` 记录：
+在域名服务商后台添加一条 `A` 记录：
 
 | 类型 | 主机记录 | 记录值 |
 | --- | --- | --- |
 | `A` | `images` | 你的服务器公网 IP |
 
-如果你使用 Cloudflare、阿里云、腾讯云等 DNS 服务，主机记录通常只填子域名前缀。例如图床域名是 `images.example.com`，主机记录填 `images`。
-
-等待解析生效后，可以在本地检查：
+等待解析生效后检查：
 
 ```bash
 ping images.example.com
 ```
-
-解析到服务器公网 IP 即可继续部署。
 
 ### 3. 安装服务端
 
@@ -123,7 +100,7 @@ sudo bash install.sh
 - 生成随机上传 Token
 - 检测并配置 Caddy / Nginx / Apache
 - 安装命令行客户端 `imgup`
-- 监听 `/etc/systemd/system/imgup.service` 变更，配置修改后自动重启服务
+- 监听服务配置变更，修改后自动 reload 并重启服务
 
 安装完成后会输出：
 
@@ -133,7 +110,7 @@ Token    : <your_token>
 配置文件 : /etc/systemd/system/imgup.service
 ```
 
-请把 Token 保存下来，客户端上传时必须使用同一个 Token。
+保存好 Token，客户端上传必须使用同一个 Token。
 
 ---
 
@@ -141,18 +118,31 @@ Token    : <your_token>
 
 ### Windows 图形客户端
 
-1. 在 [Releases](https://github.com/FeynmanNddbb/imgup/releases) 下载 `imgup.exe`，或参考 [打包说明](打包说明.md) 自行打包。
-2. 首次启动会弹出配置向导。
-3. 图床域名填写裸域名即可，例如：
+在 [Releases](https://github.com/FeynmanNddbb/imgup/releases) 下载 Windows 客户端，双击即可使用。新版 exe 已内置 `imgup.png` 作为应用图标。
 
 ```text
-images.example.com
+imgup-windows-x64-v1.0.0.exe
 ```
 
-4. Token 填写安装脚本输出的 Token。
-5. 点击“选择图片并上传”，上传成功后链接会自动复制到剪贴板。
+首次启动会弹出配置向导：
 
-配置文件位于 `imgup_config.json`，格式如下：
+| 配置项 | 示例 |
+| --- | --- |
+| 图床域名 | `images.example.com` |
+| Token | 安装脚本输出的 Token |
+
+配置完成后，点击“选择图片并上传”，上传成功后链接会自动复制到剪贴板。需要更换服务器或 Token 时，在客户端内点击“重新配置”即可。
+
+### Linux / macOS 命令行
+
+首次使用先配置一次：
+
+```bash
+chmod +x configure.sh upload.sh
+./configure.sh
+```
+
+配置脚本会写入与 Windows 客户端一致的 `imgup_config.json`：
 
 ```json
 {
@@ -162,35 +152,30 @@ images.example.com
 }
 ```
 
-也可以在程序内点击“重新配置”更新域名和 Token。
+之后永久便捷上传：
 
-### Linux / macOS 命令行
+```bash
+./upload.sh photo.jpg
+./upload.sh "中文目录/测试图片.png"
+./upload.sh *.png *.jpg
+```
 
-安装脚本会把客户端命令安装为：
+如果服务端安装脚本已把客户端安装为全局命令，也可以直接调用：
 
 ```bash
 imgup photo.jpg
 ```
 
-如果你在其他机器上使用仓库里的 `upload.sh`，先配置环境变量：
+查看当前配置：
 
 ```bash
-export IMGUP_URL="images.example.com"
-export IMGUP_TOKEN="your_token_here"
+./configure.sh --show
 ```
 
-`IMGUP_URL` 可以只填裸域名，脚本会自动补全为 `https://images.example.com/upload`。
-
-上传单张图片：
+临时覆盖配置：
 
 ```bash
-imgup photo.jpg
-```
-
-批量上传：
-
-```bash
-imgup *.png *.jpg
+IMGUP_URL="images.example.com" IMGUP_TOKEN="your_token_here" ./upload.sh photo.jpg
 ```
 
 macOS 截图后上传：
@@ -205,7 +190,7 @@ Linux 截图后上传：
 scrot -s /tmp/shot.png && imgup /tmp/shot.png
 ```
 
-### curl / 脚本集成
+### curl / 稳定 API 调用
 
 ```bash
 curl -X POST https://images.example.com/upload \

@@ -13,6 +13,8 @@ imgup_config.json
 build/
 dist/
 *.spec
+!imgup.spec
+release/
 
 # 上传的图片数据目录（通常在服务器上，不应入库）
 uploads/
