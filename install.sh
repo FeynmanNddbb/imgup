@@ -22,10 +22,13 @@ echo -e "${CYAN}Lightweight self-hosted image upload server${NC}"
 echo ""
 
 # ─── Gather config ─────────────────────────────────────────────────────────
+echo -e "${CYAN}请配置以下参数（使用默认值请直接回车）：${NC}"
+echo ""
+
 read -rp "Upload directory       [/data/images]: " UPLOAD_DIR
 UPLOAD_DIR="${UPLOAD_DIR:-/data/images}"
 
-read -rp "Base URL  [https://images.example.com]: " BASE_URL
+read -rp "Base URL ${RED}(必填)${NC} [https://images.example.com]: " BASE_URL
 BASE_URL="${BASE_URL:-https://images.example.com}"
 # 去掉尾部斜杠
 BASE_URL="${BASE_URL%/}"
@@ -298,8 +301,9 @@ if [ "$CONFIGURED" = false ]; then
     echo ""
 fi
 
-# Windows 客户端提示
-echo -e "${CYAN}Windows 客户端配置：${NC}"
-echo -e "  域名  : $DOMAIN"
-echo -e "  Token : $TOKEN"
+# 客户端配置提示
+echo -e "${CYAN}${BOLD}客户端配置（Windows / Linux / macOS）：${NC}"
+echo -e "  ${BOLD}域名  :${NC} $DOMAIN"
+echo -e "  ${BOLD}Token :${NC} ${GREEN}$TOKEN${NC}"
+echo -e "  ${RED}⚠ 请妥善保管以上信息，不要泄露给他人${NC}"
 echo ""
