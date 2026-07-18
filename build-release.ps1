@@ -1,13 +1,13 @@
 param(
-    [string]$Version = "1.0.0"
+    [string]$Version = "1.0.2"
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ReleaseDir = Join-Path $ProjectRoot "release"
-$PackageDir = Join-Path $ReleaseDir "imgup-windows-x64"
 $BuildDistDir = Join-Path $ProjectRoot "build\release-dist"
 $BuildWorkDir = Join-Path $ProjectRoot "build\release-work"
+$PackageDir = Join-Path $ProjectRoot "build\release-package\imgup-windows-x64"
 $ExeName = "imgup-windows-x64-v$Version.exe"
 $ZipName = "imgup-windows-x64-v$Version.zip"
 
@@ -23,15 +23,10 @@ if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller build failed."
 }
 
-if (Test-Path $ReleaseDir) {
-    $ResolvedRelease = (Resolve-Path $ReleaseDir).Path
-    $ResolvedRoot = (Resolve-Path $ProjectRoot).Path
-    if (-not $ResolvedRelease.StartsWith($ResolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Refusing to clean a release directory outside the project."
-    }
-    Remove-Item -LiteralPath $ReleaseDir -Recurse -Force
+New-Item -ItemType Directory -Path $ReleaseDir -Force | Out-Null
+if (Test-Path $PackageDir) {
+    Remove-Item -LiteralPath $PackageDir -Recurse -Force
 }
-
 New-Item -ItemType Directory -Path $PackageDir | Out-Null
 $BuiltExe = Join-Path $BuildDistDir "imgup.exe"
 Copy-Item $BuiltExe (Join-Path $ReleaseDir $ExeName)

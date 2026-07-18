@@ -8,8 +8,9 @@ imgup - Windows GUI 上传工具（独立可执行版本）
 import os
 import sys
 import json
+import traceback
 import tkinter as tk
-from tkinter import filedialog, messagebox, scrolledtext, simpledialog
+from tkinter import filedialog, messagebox, scrolledtext
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 import mimetypes
@@ -24,6 +25,16 @@ DEFAULT_TOKEN = "change_me_please"
 
 # 支持的图片格式
 ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".avif", ".ico"}
+
+APP_BG = "#f6f8fb"
+CARD_BG = "#ffffff"
+PRIMARY = "#2563eb"
+PRIMARY_DARK = "#1d4ed8"
+TEXT = "#172033"
+MUTED = "#64748b"
+BORDER = "#dbe3ef"
+FONT_FAMILY = "Segoe UI"
+MONO_FONT = "Consolas"
 
 
 def get_exe_dir():
@@ -52,9 +63,43 @@ def set_window_icon(window):
         pass
 
 
+def load_logo_image(max_dimension=120):
+    """Load the app logo and shrink it to a Tk-friendly display size."""
+    try:
+        image = tk.PhotoImage(file=get_resource_path("imgup.png"))
+        factor = max(1, (max(image.width(), image.height()) + max_dimension - 1) // max_dimension)
+        if factor > 1:
+            image = image.subsample(factor, factor)
+        return image
+    except (OSError, tk.TclError):
+        return None
+
+
+def center_window(window, width, height):
+    window.update_idletasks()
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = max(0, (screen_width - width) // 2)
+    y = max(0, (screen_height - height) // 2)
+    window.geometry(f"{width}x{height}+{x}+{y}")
+
+
 def get_config_path():
     """获取配置文件完整路径"""
     return os.path.join(get_exe_dir(), CONFIG_FILE)
+
+
+def get_error_log_path():
+    return os.path.join(get_exe_dir(), "imgup_error.log")
+
+
+def log_fatal_error(exc):
+    try:
+        with open(get_error_log_path(), "w", encoding="utf-8") as f:
+            f.write("imgup failed to start\n\n")
+            f.write("".join(traceback.format_exception(type(exc), exc, exc.__traceback__)))
+    except Exception:
+        pass
 
 
 def normalize_url(url):
@@ -97,6 +142,11 @@ def load_config():
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
+            if not isinstance(config, dict):
+                raise ValueError("配置文件格式必须是 JSON 对象")
+            config.setdefault("url", DEFAULT_URL)
+            config.setdefault("token", DEFAULT_TOKEN)
+            config.setdefault("version", "1.0")
             return config
     except Exception as e:
         messagebox.showerror("配置错误", f"读取配置文件失败：{e}\n\n将使用默认配置。")
@@ -121,67 +171,77 @@ def is_placeholder_config(config):
             config.get("token", "") == DEFAULT_TOKEN)
 
 
-def show_first_time_setup():
+def show_first_time_setup(parent):
     """首次启动配置向导"""
-    dialog = tk.Toplevel()
+    dialog = tk.Toplevel(parent)
     dialog.title("imgup - 首次配置向导")
-    dialog.geometry("500x350")
+    center_window(dialog, 520, 430)
     dialog.resizable(False, False)
+    dialog.configure(bg=APP_BG)
+    set_window_icon(dialog)
 
-    # 居中显示
-    dialog.transient()
+    dialog.transient(parent)
     dialog.grab_set()
 
     result = {"url": None, "token": None, "cancelled": False}
 
-    # 说明文字
-    tk.Label(
-        dialog,
-        text="欢迎使用 imgup 图片上传工具！",
-        font=("Arial", 14, "bold"),
-        fg="#2196F3"
-    ).pack(pady=(20, 10))
+    header = tk.Frame(dialog, bg=APP_BG)
+    header.pack(fill=tk.X, padx=28, pady=(24, 10))
+
+    logo = load_logo_image(84)
+    if logo:
+        tk.Label(header, image=logo, bg=APP_BG).pack()
+        dialog._imgup_logo = logo
 
     tk.Label(
-        dialog,
-        text="首次使用需要配置您的图床服务器信息",
-        font=("Arial", 10)
-    ).pack(pady=(0, 20))
+        header,
+        text="配置 imgup 客户端",
+        font=(FONT_FAMILY, 18, "bold"),
+        fg=TEXT,
+        bg=APP_BG
+    ).pack(pady=(8, 2))
 
-    # 配置区域
-    config_frame = tk.Frame(dialog)
-    config_frame.pack(padx=30, pady=10, fill=tk.BOTH, expand=True)
+    tk.Label(
+        header,
+        text="输入图床域名和上传 Token，后续即可直接上传",
+        font=(FONT_FAMILY, 10),
+        fg=MUTED,
+        bg=APP_BG
+    ).pack()
 
-    # 服务器域名
-    tk.Label(config_frame, text="图床域名:", font=("Arial", 10, "bold")).grid(
-        row=0, column=0, sticky=tk.W, pady=(0, 5)
+    config_frame = tk.Frame(dialog, bg=CARD_BG, highlightbackground=BORDER, highlightthickness=1)
+    config_frame.pack(padx=28, pady=10, fill=tk.BOTH, expand=True)
+
+    tk.Label(config_frame, text="图床域名", font=(FONT_FAMILY, 10, "bold"), fg=TEXT, bg=CARD_BG).grid(
+        row=0, column=0, sticky=tk.W, padx=18, pady=(18, 4)
     )
     tk.Label(
         config_frame,
-        text="（只需输入域名，例如：images.example.com）",
-        font=("Arial", 8),
-        fg="gray"
-    ).grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        text="只需输入域名，例如 images.example.com",
+        font=(FONT_FAMILY, 9),
+        fg=MUTED,
+        bg=CARD_BG
+    ).grid(row=1, column=0, columnspan=2, sticky=tk.W, padx=18, pady=(0, 8))
 
     url_var = tk.StringVar()
-    url_entry = tk.Entry(config_frame, textvariable=url_var, width=40, font=("Arial", 10))
-    url_entry.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=(0, 15))
+    url_entry = tk.Entry(config_frame, textvariable=url_var, width=40, font=(FONT_FAMILY, 10), relief=tk.SOLID, bd=1)
+    url_entry.grid(row=2, column=0, columnspan=2, sticky=tk.EW, padx=18, pady=(0, 16), ipady=7)
     url_entry.focus()
 
-    # Token
-    tk.Label(config_frame, text="上传 Token:", font=("Arial", 10, "bold")).grid(
-        row=3, column=0, sticky=tk.W, pady=(0, 5)
+    tk.Label(config_frame, text="上传 Token", font=(FONT_FAMILY, 10, "bold"), fg=TEXT, bg=CARD_BG).grid(
+        row=3, column=0, sticky=tk.W, padx=18, pady=(0, 4)
     )
     tk.Label(
         config_frame,
-        text="（从服务器配置中获取的密钥）",
-        font=("Arial", 8),
-        fg="gray"
-    ).grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        text="填写安装脚本输出的 Token",
+        font=(FONT_FAMILY, 9),
+        fg=MUTED,
+        bg=CARD_BG
+    ).grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=18, pady=(0, 8))
 
     token_var = tk.StringVar()
-    token_entry = tk.Entry(config_frame, textvariable=token_var, width=40, font=("Arial", 10), show="*")
-    token_entry.grid(row=5, column=0, columnspan=2, sticky=tk.EW)
+    token_entry = tk.Entry(config_frame, textvariable=token_var, width=40, font=(FONT_FAMILY, 10), show="*", relief=tk.SOLID, bd=1)
+    token_entry.grid(row=5, column=0, columnspan=2, sticky=tk.EW, padx=18, pady=(0, 18), ipady=7)
 
     config_frame.columnconfigure(0, weight=1)
 
@@ -211,18 +271,22 @@ def show_first_time_setup():
         dialog.destroy()
 
     # 按钮区域
-    btn_frame = tk.Frame(dialog)
-    btn_frame.pack(pady=20)
+    btn_frame = tk.Frame(dialog, bg=APP_BG)
+    btn_frame.pack(pady=(4, 24))
 
     tk.Button(
         btn_frame,
-        text="确认",
+        text="保存配置",
         command=on_confirm,
-        bg="#4CAF50",
+        bg=PRIMARY,
+        activebackground=PRIMARY_DARK,
         fg="white",
-        font=("Arial", 10, "bold"),
-        width=12,
-        height=1
+        activeforeground="white",
+        font=(FONT_FAMILY, 10, "bold"),
+        width=14,
+        height=1,
+        relief=tk.FLAT,
+        cursor="hand2"
     ).pack(side=tk.LEFT, padx=10)
 
     tk.Button(
@@ -231,7 +295,12 @@ def show_first_time_setup():
         command=on_cancel,
         width=12,
         height=1,
-        font=("Arial", 10)
+        font=(FONT_FAMILY, 10),
+        fg=TEXT,
+        bg="#e8edf5",
+        activebackground="#dbe3ef",
+        relief=tk.FLAT,
+        cursor="hand2"
     ).pack(side=tk.LEFT, padx=10)
 
     # 绑定回车键
@@ -307,8 +376,10 @@ class UploadApp:
         self.root = root
         self.config = config
         self.root.title("imgup - 图片上传工具")
-        self.root.geometry("700x600")
+        center_window(self.root, 780, 620)
         self.root.resizable(True, True)
+        self.root.minsize(720, 560)
+        self.root.configure(bg=APP_BG)
 
         self._build_ui()
 
@@ -336,59 +407,132 @@ class UploadApp:
         self._log("")
 
     def _build_ui(self):
-        # ── 顶部信息栏 ──────────────────────────────────────────
-        info_frame = tk.Frame(self.root, bg="#f5f5f5", relief=tk.RIDGE, bd=1)
-        info_frame.pack(fill=tk.X, padx=10, pady=10)
+        main_frame = tk.Frame(self.root, bg=APP_BG)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=18, pady=18)
+
+        # ── 品牌与配置栏 ────────────────────────────────────────
+        header_frame = tk.Frame(main_frame, bg=CARD_BG, highlightbackground=BORDER, highlightthickness=1)
+        header_frame.pack(fill=tk.X)
+
+        logo = load_logo_image(86)
+        if logo:
+            tk.Label(header_frame, image=logo, bg=CARD_BG).pack(side=tk.LEFT, padx=(18, 14), pady=16)
+            self._imgup_logo = logo
+
+        title_frame = tk.Frame(header_frame, bg=CARD_BG)
+        title_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=16)
 
         tk.Label(
-            info_frame,
-            text=f"📡 服务器: {self.config['url']}",
-            bg="#f5f5f5",
-            font=("Arial", 9)
-        ).pack(anchor=tk.W, padx=10, pady=(5, 2))
+            title_frame,
+            text="imgup 图片上传工具",
+            bg=CARD_BG,
+            fg=TEXT,
+            font=(FONT_FAMILY, 20, "bold")
+        ).pack(anchor=tk.W)
 
         tk.Label(
-            info_frame,
-            text=f"🔑 Token: {'*' * 20}",
-            bg="#f5f5f5",
-            font=("Arial", 9)
-        ).pack(anchor=tk.W, padx=10, pady=(2, 5))
+            title_frame,
+            text="轻量、安全、自托管，上传后自动复制图片链接",
+            bg=CARD_BG,
+            fg=MUTED,
+            font=(FONT_FAMILY, 10)
+        ).pack(anchor=tk.W, pady=(2, 10))
+
+        tk.Label(
+            title_frame,
+            text=f"服务器  {self.config['url']}",
+            bg=CARD_BG,
+            fg=TEXT,
+            font=(FONT_FAMILY, 9)
+        ).pack(anchor=tk.W)
+
+        tk.Label(
+            title_frame,
+            text=f"Token  {'*' * 20}",
+            bg=CARD_BG,
+            fg=MUTED,
+            font=(FONT_FAMILY, 9)
+        ).pack(anchor=tk.W, pady=(2, 0))
 
         # ── 按钮区 ──────────────────────────────────────────────
-        btn_frame = tk.Frame(self.root)
-        btn_frame.pack(fill=tk.X, padx=10, pady=5)
+        btn_frame = tk.Frame(main_frame, bg=APP_BG)
+        btn_frame.pack(fill=tk.X, pady=(14, 10))
 
         tk.Button(
-            btn_frame, text="📂  选择图片并上传",
+            btn_frame, text="选择图片并上传",
             command=self.select_and_upload,
-            bg="#4CAF50", fg="white",
-            font=("Arial", 12, "bold"),
-            padx=20, pady=8,
+            bg=PRIMARY, activebackground=PRIMARY_DARK,
+            fg="white", activeforeground="white",
+            font=(FONT_FAMILY, 12, "bold"),
+            padx=24, pady=10,
+            relief=tk.FLAT,
+            cursor="hand2",
         ).pack(side=tk.LEFT, padx=5)
 
         tk.Button(
-            btn_frame, text="⚙️ 重新配置",
+            btn_frame, text="重新配置",
             command=self.reconfigure,
-            padx=15, pady=8,
+            bg="#e8edf5", activebackground="#dbe3ef",
+            fg=TEXT,
+            font=(FONT_FAMILY, 10),
+            padx=18, pady=10,
+            relief=tk.FLAT,
+            cursor="hand2",
         ).pack(side=tk.LEFT, padx=5)
 
         tk.Button(
             btn_frame, text="清空日志",
             command=lambda: self.log_text.delete(1.0, tk.END),
-            padx=15, pady=8,
+            bg="#e8edf5", activebackground="#dbe3ef",
+            fg=TEXT,
+            font=(FONT_FAMILY, 10),
+            padx=18, pady=10,
+            relief=tk.FLAT,
+            cursor="hand2",
         ).pack(side=tk.LEFT, padx=5)
 
         # ── 日志区 ──────────────────────────────────────────────
-        log_frame = tk.LabelFrame(self.root, text="上传日志", padx=10, pady=10)
-        log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        log_frame = tk.LabelFrame(
+            main_frame,
+            text="上传日志",
+            padx=12,
+            pady=12,
+            bg=CARD_BG,
+            fg=TEXT,
+            font=(FONT_FAMILY, 10, "bold"),
+            highlightbackground=BORDER,
+            highlightthickness=1,
+            relief=tk.FLAT
+        )
+        log_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
 
-        self.log_text = scrolledtext.ScrolledText(log_frame, wrap=tk.WORD, font=("Consolas", 9))
+        self.log_text = scrolledtext.ScrolledText(
+            log_frame,
+            wrap=tk.WORD,
+            font=(MONO_FONT, 10),
+            bg="#fbfdff",
+            fg=TEXT,
+            insertbackground=TEXT,
+            relief=tk.FLAT,
+            padx=10,
+            pady=10
+        )
         self.log_text.pack(fill=tk.BOTH, expand=True)
 
         # ── 状态栏 ──────────────────────────────────────────────
         self.status_var = tk.StringVar(value="就绪 — 点击按钮选择图片")
-        tk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W).pack(
-            fill=tk.X, side=tk.BOTTOM
+        tk.Label(
+            self.root,
+            textvariable=self.status_var,
+            bg="#eef3fb",
+            fg=MUTED,
+            font=(FONT_FAMILY, 9),
+            anchor=tk.W,
+            padx=12,
+            pady=6
+        ).pack(
+            fill=tk.X,
+            side=tk.BOTTOM
         )
 
         # 欢迎信息
@@ -405,7 +549,7 @@ class UploadApp:
 
     def reconfigure(self):
         """重新配置"""
-        setup_result = show_first_time_setup()
+        setup_result = show_first_time_setup(self.root)
         if not setup_result["cancelled"] and setup_result["url"] and setup_result["token"]:
             new_config = {
                 "url": setup_result["url"],
@@ -476,13 +620,18 @@ class UploadApp:
 
 
 def main():
+    root = tk.Tk()
+    root.withdraw()
+    set_window_icon(root)
+
     # 加载配置
     config = load_config()
 
     # 检查是否为首次启动或配置为占位符
     if is_placeholder_config(config):
-        setup_result = show_first_time_setup()
+        setup_result = show_first_time_setup(root)
         if setup_result["cancelled"]:
+            root.destroy()
             sys.exit(0)
 
         if setup_result["url"] and setup_result["token"]:
@@ -494,12 +643,26 @@ def main():
             save_config(config)
 
     # 启动主界面
-    root = tk.Tk()
-    set_window_icon(root)
-
     UploadApp(root, config)
+    root.deiconify()
+    root.lift()
     root.mainloop()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        log_fatal_error(exc)
+        try:
+            error_root = tk.Tk()
+            error_root.withdraw()
+            messagebox.showerror(
+                "imgup 启动失败",
+                f"程序启动时遇到错误：\n{exc}\n\n详情已写入：\n{get_error_log_path()}",
+                parent=error_root
+            )
+            error_root.destroy()
+        except Exception:
+            pass
+        raise

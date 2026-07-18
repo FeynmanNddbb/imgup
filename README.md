@@ -121,7 +121,7 @@ Token    : <your_token>
 在 [Releases](https://github.com/FeynmanNddbb/imgup/releases) 下载 Windows 客户端，双击即可使用。新版 exe 已内置 `imgup.png` 作为应用图标。
 
 ```text
-imgup-windows-x64-v1.0.0.exe
+imgup-windows-x64-v1.0.2.exe
 ```
 
 首次启动会弹出配置向导：
