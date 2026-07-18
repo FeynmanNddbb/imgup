@@ -135,47 +135,52 @@ imgup-windows-x64-v1.0.0.exe
 
 ### Linux / macOS 命令行
 
-首次使用先配置一次：
-
-```bash
-chmod +x configure.sh upload.sh
-./configure.sh
-```
-
-配置脚本会写入与 Windows 客户端一致的 `imgup_config.json`：
-
-```json
-{
-  "url": "https://images.example.com/upload",
-  "token": "your_token_here",
-  "version": "1.0"
-}
-```
-
-之后永久便捷上传：
-
-```bash
-./upload.sh photo.jpg
-./upload.sh "中文目录/测试图片.png"
-./upload.sh *.png *.jpg
-```
-
-如果服务端安装脚本已把客户端安装为全局命令，也可以直接调用：
+如果是在运行过 `sudo bash install.sh` 的服务器本机，安装脚本已经把客户端安装成全局命令 `imgup`，直接上传：
 
 ```bash
 imgup photo.jpg
+imgup "中文目录/测试图片.png"
+imgup *.png *.jpg
+```
+
+如果是在另一台 Linux/macOS 电脑上使用客户端，运行客户端安装脚本：
+
+```bash
+chmod +x install-client.sh upload.sh
+./install-client.sh
+```
+
+按提示输入两个参数：
+
+```text
+Image host domain: images.example.com
+Upload token: your_token_here
+```
+
+脚本会自动完成：
+
+- 安装全局命令 `/usr/local/bin/imgup`
+- 写入客户端配置 `~/.config/imgup/imgup_config.json`
+- 自动把裸域名补全为 `https://images.example.com/upload`
+
+安装好以后，不需要再进入项目目录，任意位置直接上传：
+
+```bash
+imgup photo.jpg
+imgup "中文目录/测试图片.png"
+imgup *.png *.jpg
 ```
 
 查看当前配置：
 
 ```bash
-./configure.sh --show
+cat ~/.config/imgup/imgup_config.json
 ```
 
 临时覆盖配置：
 
 ```bash
-IMGUP_URL="images.example.com" IMGUP_TOKEN="your_token_here" ./upload.sh photo.jpg
+IMGUP_URL="images.example.com" IMGUP_TOKEN="your_token_here" imgup photo.jpg
 ```
 
 macOS 截图后上传：

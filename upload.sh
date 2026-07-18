@@ -61,7 +61,7 @@ usage() {
     echo ""
     echo -e "  ${CYAN}Usage:${NC}   $0 <image> [image2] ..."
     echo -e "  ${CYAN}Config:${NC}  $CONFIG_FILE"
-    echo -e "  ${CYAN}Setup:${NC}   ./configure.sh"
+    echo -e "  ${CYAN}Setup:${NC}   ./install-client.sh or ./configure.sh"
     echo -e "  ${CYAN}Env:${NC}     IMGUP_URL / IMGUP_TOKEN override config"
     echo ""
     echo -e "  ${CYAN}Example:${NC} $0 screenshot.png photo.jpg"
