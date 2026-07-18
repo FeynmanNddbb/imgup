@@ -28,7 +28,8 @@ echo ""
 read -rp "Upload directory       [/data/images]: " UPLOAD_DIR
 UPLOAD_DIR="${UPLOAD_DIR:-/data/images}"
 
-read -rp "Base URL ${RED}(必填)${NC} [https://images.example.com]: " BASE_URL
+echo -ne "Base URL ${RED}(必填)${NC} [https://images.example.com]: "
+read -r BASE_URL
 BASE_URL="${BASE_URL:-https://images.example.com}"
 # 去掉尾部斜杠
 BASE_URL="${BASE_URL%/}"
