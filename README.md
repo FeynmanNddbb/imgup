@@ -2,223 +2,265 @@
 
 # imgup 🖼️
 
-### 轻量级自托管图片上传服务
+### 构建属于自己的安全图床服务
 
-**零依赖** · **日期归档** · **跨平台客户端**
+把本地图片变成在线链接，轻量、安全、完全自托管
+
+<br>
 
 [![Python](https://img.shields.io/badge/Python-3.6+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey?style=flat)]()
-[![GitHub Stars](https://img.shields.io/github/stars/FeynmanNddbb/imgup?style=flat)](https://github.com/FeynmanNddbb/imgup/stargazers)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat)](LICENSE)
+[![Platform](https://img.shields.io/badge/客户端-Windows%20%7C%20Linux%20%7C%20macOS-6366f1?style=flat)]()
+[![GitHub Stars](https://img.shields.io/github/stars/FeynmanNddbb/imgup?style=flat&logo=github)](https://github.com/FeynmanNddbb/imgup/stargazers)
 
 <br>
 
-纯 Python 标准库实现，无需任何第三方依赖  
-自动按日期归档，配合 Web 服务器即可对外提供访问
-
-<br>
-
-```bash
-上传 photo.jpg  →  https://images.example.com/2026-07-17/photo.jpg
+```
+📷 本地图片  →  imgup  →  https://your-domain.com/2026-07-18/photo.jpg  🔗
 ```
 
 <br>
 
-[📦 快速开始](#-快速开始) · 
-[📖 文档](#-简介) · 
-[🖥️ Windows 客户端](#客户端配置) · 
-[⚙️ 配置](#️-配置)
+[🚀 快速部署](#-快速部署) ·
+[💻 客户端下载](#-客户端使用) ·
+[⚙️ 配置](#️-配置) ·
+[📋 API](#-api-参考)
 
 </div>
 
 ---
 
-## 📖 简介
+## 这是什么？
 
-imgup 是一个纯 Python 标准库实现的图片上传服务。上传的图片自动按日期归档到 `YYYY-MM-DD/` 文件夹，提供简单的 Token 认证，支持多种客户端访问方式。
+imgup 是一个**自托管图床服务**，部署在你自己的服务器上，帮你把本地图片一键上传并生成可分享的在线链接。
 
-## ✨ 特性
+- 📁 图片存储在**你的服务器**，数据完全自主掌控
+- 🔒 Token 认证，只有你能上传，图片可以公开访问
+- 📅 自动按日期归档，整洁有序
+- 🪶 **零依赖**，纯 Python 3 标准库，服务端开箱即用
 
-<table>
-<tr>
-<td>
+**适合场景：** 博客写作、文档配图、团队内部图片分享、替代付费图床服务
 
-**服务端**
-- 🚀 零依赖，纯 Python 3 标准库
-- 📅 自动日期归档 `YYYY-MM-DD/`
-- 🔒 Token 认证保护
-- 🔄 防重名（MD5 hash）
-- 🌐 CORS 跨域支持
-- 📦 多格式支持（jpg/png/gif/webp/svg/...）
+---
 
-</td>
-<td>
+## ✨ 核心特性
 
-**客户端**
-- 🖥️ Windows 图形界面（双击即用）
-- 🐧 Linux/Mac Shell 脚本
-- 📋 自动复制链接到剪贴板
-- 📊 实时上传进度显示
-- 🔢 批量上传支持
-- 🌍 Web API 调用
+|  | 特性 | 说明 |
+|--|------|------|
+| 🪶 | **零依赖** | 纯 Python 3 标准库，无需 `pip install` 任何东西 |
+| 🔒 | **私有安全** | Token 鉴权，图片只能由你上传 |
+| 📅 | **日期归档** | 自动整理为 `YYYY-MM-DD/` 目录结构 |
+| 🔁 | **防重名** | 同名文件自动追加 MD5 短 hash |
+| 🌐 | **CORS 支持** | 可直接在网页前端调用 |
+| 💻 | **多平台客户端** | Windows 图形界面 + Linux/macOS 命令行 |
+| ⚡ | **轻量部署** | 单文件服务端，一条命令启动 |
 
-</td>
-</tr>
-</table>
+---
 
-## 🎯 快速开始
+## 🚀 快速部署
 
-### 服务端部署
-
-#### 一键安装（推荐）
+### 一键安装（推荐）
 
 ```bash
-git clone https://github.com/yourusername/imgup.git
+git clone https://github.com/FeynmanNddbb/imgup.git
 cd imgup
-bash install.sh
+sudo bash install.sh
 ```
 
-安装脚本会自动：
-- ✅ 询问配置（上传目录、域名、端口）
-- ✅ 生成随机 Token
-- ✅ 注册并启动 systemd 服务
-- ✅ 创建 `imgup` 命令到 `/usr/local/bin`
+**安装脚本会询问你：**
+1. 图片存储目录（默认 `/data/images`）
+2. 你的域名（例如 `https://images.mydomain.com`）
+3. 监听端口（默认 `8765`）
+4. 自动生成随机 Token
 
-#### 手动安装
+**安装脚本会自动完成：**
+- ✅ 创建 systemd 服务并启动
+- ✅ 自动检测并配置反向代理（按优先级：Caddy > Nginx > Apache > Traefik）
+- ✅ 配置上传客户端命令 `imgup`
+
+> **你只需要运行一次安装脚本，所有配置自动完成！**
+
+---
+
+### 手动安装
+
+如果需要手动安装或自定义配置：
+
+<details>
+<summary><b>展开查看手动安装步骤</b></summary>
+
+#### 1. 复制文件并配置服务
 
 ```bash
-# 1. 复制文件
+# 复制服务端文件
 sudo cp server.py /opt/imgup/server.py
-sudo cp imgup.service /etc/systemd/system/imgup.service
+sudo cp imgup.service /etc/systemd/system/
 
-# 2. 编辑配置
+# 编辑配置（修改域名和 Token）
 sudo nano /etc/systemd/system/imgup.service
 
-# 3. 启动服务
+# 启动服务
 sudo systemctl daemon-reload
 sudo systemctl enable --now imgup
-sudo systemctl status imgup
 ```
 
-### 客户端配置
+#### 2. 配置 Web 服务器
 
-<details>
-<summary><b>🖥️ Windows 图形界面（推荐新手）</b></summary>
+**Caddy：**
 
-#### 步骤 1：配置服务器信息
+```caddy
+# /etc/caddy/Caddyfile
+images.your-domain.com {
+    encode gzip zstd
 
-编辑 `upload_gui.py` 文件第 17-18 行：
+    handle /upload {
+        reverse_proxy 127.0.0.1:8765
+    }
 
-```python
-DEFAULT_URL = "https://your-server.com/upload"
-DEFAULT_TOKEN = "your_secret_token"
+    handle {
+        root * /data/images
+        file_server browse
+    }
+}
 ```
 
-#### 步骤 2：启动程序
+```bash
+sudo systemctl reload caddy
+```
 
-双击 `上传图片.bat` 文件
+**Nginx：**
 
-#### 步骤 3：选择并上传
+```nginx
+# /etc/nginx/sites-available/imgup
+server {
+    listen 80;
+    server_name images.your-domain.com;
 
-点击 **"📂 选择图片并上传"** 按钮，选择图片文件（支持多选）
+    location /upload {
+        proxy_pass http://127.0.0.1:8765;
+        client_max_body_size 20M;
+    }
 
-![Windows GUI](https://via.placeholder.com/600x400/4CAF50/FFFFFF?text=Windows+GUI+Upload+Tool)
+    location / {
+        root /data/images;
+        autoindex on;
+    }
+}
+```
 
-**功能亮点：**
-- ✨ 零学习成本，双击即用
-- 📦 批量上传多个文件
-- 📋 自动复制链接到剪贴板
-- 📊 实时日志显示
-- 🔧 支持配置保存
-
-📚 [详细使用说明 →](WINDOWS_GUI.md)
+```bash
+sudo ln -s /etc/nginx/sites-available/imgup /etc/nginx/sites-enabled/
+sudo systemctl reload nginx
+```
 
 </details>
 
-<details>
-<summary><b>🐧 Linux/Mac Shell 脚本（推荐开发者）</b></summary>
+---
+
+## 💻 客户端使用
+
+### 🖥️ Windows — 图形界面（推荐）
+
+1. 在 [Releases](https://github.com/FeynmanNddbb/imgup/releases) 下载 `imgup.exe`，或自行[打包](打包说明.md)
+2. 双击运行，首次启动自动弹出配置向导
+3. 输入图床域名（自动补全 `https://`）和 Token
+4. 点击 **"选择图片并上传"**，完成后链接自动复制到剪贴板
+
+> 配置保存在 `imgup_config.json`，修改后重启程序生效
+
+### 🐧 Linux / 🍎 macOS — 命令行
 
 ```bash
-# 1. 设置环境变量（加入 ~/.bashrc 或 ~/.zshrc）
-export IMGUP_URL="https://images.example.com/upload"
+# 设置配置（加入 ~/.bashrc 或 ~/.zshrc，之后无需重复设置）
+export IMGUP_URL="https://images.your-domain.com/upload"
 export IMGUP_TOKEN="your_token_here"
+source ~/.bashrc
 
-# 2. 上传单张图片
+# 上传单张图片
 ./upload.sh photo.jpg
 
-# 3. 批量上传
-./upload.sh *.png
+# 批量上传
+./upload.sh *.png *.jpg
 
-# 4. 快速截图并上传（macOS）
-screencapture -i /tmp/screenshot.png && ./upload.sh /tmp/screenshot.png
+# 上传后自动复制链接到剪贴板 ✓
 ```
 
-上传成功后自动复制链接到剪贴板。
-
-</details>
-
-<details>
-<summary><b>🌐 curl 命令行</b></summary>
+**截图直传（macOS）：**
 
 ```bash
-curl -X POST https://images.example.com/upload \
-  -H "X-Upload-Token: your_token_here" \
-  -F "file=@/path/to/image.jpg"
+screencapture -i /tmp/shot.png && ./upload.sh /tmp/shot.png
 ```
 
-**返回示例：**
+**截图直传（Linux）：**
+
+```bash
+scrot -s /tmp/shot.png && ./upload.sh /tmp/shot.png
+```
+
+### 🌐 curl / 脚本集成
+
+```bash
+curl -X POST https://images.your-domain.com/upload \
+  -H "X-Upload-Token: your_token" \
+  -F "file=@photo.jpg"
+```
 
 ```json
 {
-  "url": "https://images.example.com/2026-07-17/photo.jpg",
+  "url": "https://images.your-domain.com/2026-07-18/photo.jpg",
   "filename": "photo.jpg",
-  "date": "2026-07-17",
+  "date": "2026-07-18",
   "size": 204800
 }
 ```
 
-</details>
+---
 
-<details>
-<summary><b>💻 JavaScript/TypeScript</b></summary>
+## ⚙️ 配置说明
 
-```javascript
-async function uploadImage(file, token) {
-  const formData = new FormData();
-  formData.append("file", file);
+### 📌 必须修改的配置项
 
-  const response = await fetch("https://images.example.com/upload", {
-    method: "POST",
-    headers: { "X-Upload-Token": token },
-    body: formData,
-  });
+**无论使用哪种方式部署，以下两个配置都必须修改为你自己的：**
 
-  const data = await response.json();
-  return data.url; // https://images.example.com/2026-07-17/photo.jpg
-}
+| 配置项 | 默认占位符 | 你需要改成 | 说明 |
+|--------|-----------|----------|------|
+| **域名** | `https://images.example.com` | `https://images.你的域名.com` | 图床的公网访问地址 |
+| **Token** | `change_me_please` | 随机字符串（建议32位以上） | 上传密钥，防止他人盗用 |
 
-// 使用示例
-const input = document.querySelector('input[type="file"]');
-input.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  const url = await uploadImage(file, "your_token");
-  console.log("上传成功:", url);
-});
+---
+
+### 🖥️ 服务端配置（必须）
+
+**方式一：使用安装脚本（推荐）**
+
+运行 `bash install.sh` 时会交互式询问：
+- 存储目录
+- 你的域名（例如：`images.example.com`）
+- 监听端口
+- 脚本自动生成随机 Token
+
+**方式二：手动修改配置文件**
+
+编辑 `/etc/systemd/system/imgup.service`，找到以下两行：
+
+```bash
+Environment=UPLOAD_TOKEN=change_me_please      # ← 改成你的随机 Token
+Environment=BASE_URL=https://images.example.com # ← 改成你的域名
 ```
 
-</details>
+**示例：**
 
-## ⚙️ 配置
+```bash
+Environment=UPLOAD_TOKEN=a7f3c9e2b8d14f6a95e8c7b3d2f1a9e4c6b8d5f2  # ← 你的随机Token
+Environment=BASE_URL=https://images.mydomain.com                   # ← 你的域名
+```
 
-所有配置通过环境变量传入（在 `imgup.service` 中修改）：
+**生成安全 Token：**
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `UPLOAD_DIR` | `/data/images` | 文件存储根目录 |
-| `UPLOAD_TOKEN` | `change_me_please` | 上传鉴权 Token（**务必修改**） |
-| `BASE_URL` | `https://images.example.com` | 公网访问域名 |
-| `PORT` | `8765` | 监听端口（仅本地 127.0.0.1） |
-| `MAX_SIZE_MB` | `20` | 单文件最大体积（MB） |
+```bash
+openssl rand -hex 32
+# 输出类似：a7f3c9e2b8d14f6a95e8c7b3d2f1a9e4c6b8d5f2a9c1e3b7d4f6a8c2e5b9d1f3
+```
 
 修改后重启服务：
 
@@ -227,300 +269,158 @@ sudo systemctl daemon-reload
 sudo systemctl restart imgup
 ```
 
-## 🌐 Web 服务器配置
+---
 
-### Caddy（推荐）
+### 💻 客户端配置
 
-在 `/etc/caddy/Caddyfile` 中添加：
+#### Windows（imgup.exe）
 
-```caddy
-images.example.com {
-    encode gzip zstd
+**首次启动自动配置：**
 
-    # 上传接口代理
-    handle /upload {
-        reverse_proxy 127.0.0.1:8765
-    }
+1. 双击 `imgup.exe`
+2. 弹出配置向导，输入：
+   - **图床域名**：只输入域名部分（例如 `images.mydomain.com`），程序自动补全 `https://` 和 `/upload`
+   - **Token**：从服务器配置中复制你设置的 Token
 
-    # 健康检查
-    handle /health {
-        reverse_proxy 127.0.0.1:8765
-    }
+**后续修改配置：**
 
-    # 静态文件浏览
-    handle {
-        root * /data/images
-        file_server browse
-    }
-}
-```
+方式1：点击程序内 "⚙️ 重新配置" 按钮
 
-重载配置：
-
-```bash
-caddy validate --config /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-```
-
-### Nginx
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name images.example.com;
-
-    # SSL 配置
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    # 上传接口
-    location /upload {
-        proxy_pass http://127.0.0.1:8765;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        client_max_body_size 20M;
-    }
-
-    # 静态文件
-    location / {
-        root /data/images;
-        autoindex on;
-        autoindex_exact_size off;
-        autoindex_localtime on;
-    }
-}
-```
-
-## 📁 文件结构
-
-```
-/data/images/
-├── 2026-07-15/
-│   ├── screenshot.png
-│   └── banner.jpg
-├── 2026-07-16/
-│   └── logo.svg
-└── 2026-07-17/
-    ├── photo.jpg
-    └── photo_a1b2c3d4.jpg   ← 重名时自动加 hash
-```
-
-## 📋 API 参考
-
-### `GET /health`
-
-健康检查
-
-**响应示例：**
+方式2：编辑 `imgup_config.json` 文件（与 exe 同目录）：
 
 ```json
 {
-  "status": "ok",
-  "upload_dir": "/data/images"
+  "url": "https://images.mydomain.com/upload",  ← 改成你的域名
+  "token": "a7f3c9e2b8d14f6a...",                ← 改成你的Token
+  "version": "1.0"
 }
 ```
 
-### `POST /upload`
+修改后重启程序生效。
 
-上传图片
+---
+
+#### Linux / macOS（upload.sh）
+
+编辑 `~/.bashrc` 或 `~/.zshrc`，添加：
+
+```bash
+export IMGUP_URL="https://images.mydomain.com/upload"   # ← 改成你的域名
+export IMGUP_TOKEN="a7f3c9e2b8d14f6a..."                # ← 改成你的Token
+```
+
+保存后重新加载：
+
+```bash
+source ~/.bashrc  # 或 source ~/.zshrc
+```
+
+之后直接使用 `./upload.sh photo.jpg` 上传。
+
+---
+
+### 🔍 配置检查清单
+
+部署完成后，确认以下配置已修改：
+
+- [ ] 服务端 `imgup.service` 中的 `UPLOAD_TOKEN` 已改为随机字符串
+- [ ] 服务端 `imgup.service` 中的 `BASE_URL` 已改为你的域名
+- [ ] 客户端配置中的域名和 Token 与服务端**完全一致**
+- [ ] Web 服务器（Caddy/Nginx）中的域名已配置并解析生效
+- [ ] 防火墙允许 80/443 端口访问
+
+---
+
+### 📋 完整环境变量列表
+
+服务端 `imgup.service` 可配置的所有环境变量：
+
+| 变量 | 默认值 | 说明 | 是否必改 |
+|------|--------|------|---------|
+| `UPLOAD_DIR` | `/data/images` | 图片存储目录 | 可选 |
+| `UPLOAD_TOKEN` | `change_me_please` | 上传鉴权密钥 | ✅ **必须** |
+| `BASE_URL` | `https://images.example.com` | 你的图床域名 | ✅ **必须** |
+| `PORT` | `8765` | 监听端口（仅本地） | 可选 |
+| `MAX_SIZE_MB` | `20` | 单文件最大体积（MB） | 可选 |
+
+---
+
+## 📁 存储结构
+
+```
+/data/images/
+├── 2026-07-16/
+│   └── logo.svg
+├── 2026-07-17/
+│   ├── banner.jpg
+│   └── screenshot.png
+└── 2026-07-18/
+    ├── photo.jpg
+    └── photo_a1b2c3d4.jpg   ← 重名时自动追加 hash
+```
+
+---
+
+## 📋 API 参考
+
+### `GET /health` — 健康检查
+
+```json
+{ "status": "ok", "upload_dir": "/data/images" }
+```
+
+### `POST /upload` — 上传图片
 
 **请求头：**
 
 ```
+X-Upload-Token: <your_token>
 Content-Type: multipart/form-data
-X-Upload-Token: your_token
 ```
 
-**表单字段：**
+**表单字段：** `file` — 图片文件
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `file` | File | 图片文件 |
+**支持格式：** `.jpg` `.jpeg` `.png` `.gif` `.webp` `.svg` `.bmp` `.avif` `.ico`
 
-**支持格式：**
-
-`.jpg` `.jpeg` `.png` `.gif` `.webp` `.svg` `.bmp` `.avif` `.ico`
-
-**响应示例：**
+**响应：**
 
 ```json
 {
-  "url": "https://images.example.com/2026-07-17/photo.jpg",
+  "url": "https://images.your-domain.com/2026-07-18/photo.jpg",
   "filename": "photo.jpg",
-  "date": "2026-07-17",
+  "date": "2026-07-18",
   "size": 204800
 }
 ```
 
-**错误响应：**
-
-```json
-{
-  "error": "unauthorized: invalid token"
-}
-```
+---
 
 ## 🔧 服务管理
 
 ```bash
-# 查看状态
-sudo systemctl status imgup
-
-# 重启服务
-sudo systemctl restart imgup
-
-# 停止服务
-sudo systemctl stop imgup
-
-# 查看实时日志
-sudo journalctl -u imgup -f
-
-# 查看最近日志
-sudo journalctl -u imgup -n 100
+sudo systemctl status imgup     # 查看运行状态
+sudo systemctl restart imgup    # 重启服务
+sudo journalctl -u imgup -f     # 实时查看日志
 ```
 
-## 🛠️ 开发与扩展
-
-### 本地开发
-
-```bash
-# 设置环境变量
-export UPLOAD_DIR="./uploads"
-export UPLOAD_TOKEN="test_token"
-export BASE_URL="http://localhost:8765"
-export PORT="8765"
-
-# 启动开发服务器
-python3 server.py
-```
-
-### 自定义客户端
-
-imgup 使用标准的 HTTP multipart/form-data 协议，可以轻松集成到任何语言：
-
-<details>
-<summary>Python 示例</summary>
-
-```python
-import requests
-
-def upload_image(file_path, url, token):
-    with open(file_path, "rb") as f:
-        files = {"file": f}
-        headers = {"X-Upload-Token": token}
-        response = requests.post(url, files=files, headers=headers)
-        return response.json()
-
-result = upload_image("photo.jpg", "https://images.example.com/upload", "your_token")
-print(result["url"])
-```
-
-</details>
-
-<details>
-<summary>Go 示例</summary>
-
-```go
-package main
-
-import (
-    "bytes"
-    "io"
-    "mime/multipart"
-    "net/http"
-    "os"
-)
-
-func uploadImage(filePath, url, token string) error {
-    file, _ := os.Open(filePath)
-    defer file.Close()
-
-    body := &bytes.Buffer{}
-    writer := multipart.NewWriter(body)
-    part, _ := writer.CreateFormFile("file", filePath)
-    io.Copy(part, file)
-    writer.Close()
-
-    req, _ := http.NewRequest("POST", url, body)
-    req.Header.Set("Content-Type", writer.FormDataContentType())
-    req.Header.Set("X-Upload-Token", token)
-
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    return err
-}
-```
-
-</details>
+---
 
 ## 🔒 安全建议
 
-1. **强 Token**：使用随机生成的长 Token
-   ```bash
-   openssl rand -hex 32
-   ```
+- 使用 `openssl rand -hex 32` 生成强 Token，不要使用弱密码
+- 生产环境必须启用 HTTPS（Caddy 可自动申请证书）
+- 限制上传端口只允许本地访问：`ufw allow from 127.0.0.1 to any port 8765`
 
-2. **HTTPS**：生产环境务必启用 SSL
-   ```bash
-   # 使用 Caddy 自动获取证书
-   caddy run --config /etc/caddy/Caddyfile
-   ```
+---
 
-3. **防火墙**：仅允许 Web 服务器访问上传端口
-   ```bash
-   sudo ufw allow from 127.0.0.1 to any port 8765
-   ```
+## 📄 License
 
-4. **文件权限**：限制上传目录权限
-   ```bash
-   sudo chown -R www-data:www-data /data/images
-   sudo chmod -R 755 /data/images
-   ```
-
-5. **备份**：定期备份图片目录
-   ```bash
-   rsync -avz /data/images/ backup@server:/backup/images/
-   ```
-
-## 📊 监控
-
-### Prometheus Exporter
-
-可以添加 `/metrics` 端点导出指标：
-
-```python
-# 在 server.py 中添加
-def do_GET(self):
-    if self.path == "/metrics":
-        metrics = f"""
-# HELP imgup_uploads_total Total number of uploads
-# TYPE imgup_uploads_total counter
-imgup_uploads_total {upload_count}
-
-# HELP imgup_upload_bytes_total Total bytes uploaded
-# TYPE imgup_upload_bytes_total counter
-imgup_upload_bytes_total {total_bytes}
-"""
-        self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
-        self.end_headers()
-        self.wfile.write(metrics.encode())
-```
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 📄 许可证
-
-[MIT License](LICENSE)
+[MIT](LICENSE) © 2026 [FeynmanNddbb](https://github.com/FeynmanNddbb)
 
 ---
 
 <div align="center">
 
 **[⬆ 回到顶部](#imgup-️)**
-
-Made with ❤️ by [Your Name](https://github.com/yourusername)
 
 </div>
