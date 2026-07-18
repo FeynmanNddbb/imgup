@@ -117,19 +117,17 @@ if command -v caddy &>/dev/null; then
 $DOMAIN {
     encode gzip zstd
 
+    # 上传接口代理到本地 Python 服务
     handle /upload {
-        request_body {
-            max_size 20MB
-        }
-        reverse_proxy 127.0.0.1:$PORT {
-            transport http {
-                read_timeout  60s
-                write_timeout 60s
-                response_header_timeout 60s
-            }
-        }
+        reverse_proxy 127.0.0.1:$PORT
     }
 
+    # 健康检查
+    handle /health {
+        reverse_proxy 127.0.0.1:$PORT
+    }
+
+    # 静态文件浏览
     handle {
         root * $UPLOAD_DIR
         file_server browse
