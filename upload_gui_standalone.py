@@ -90,7 +90,16 @@ def get_config_path():
 
 
 def get_error_log_path():
-    return os.path.join(get_exe_dir(), "imgup_error.log")
+    # 优先写到 exe 目录，失败则写到 %TEMP% 作兜底
+    primary = os.path.join(get_exe_dir(), "imgup_error.log")
+    try:
+        # 测试能否写入
+        with open(primary, "a", encoding="utf-8"):
+            pass
+        return primary
+    except OSError:
+        import tempfile
+        return os.path.join(tempfile.gettempdir(), "imgup_error.log")
 
 
 def log_fatal_error(exc):
@@ -303,9 +312,10 @@ def show_first_time_setup(parent):
         cursor="hand2"
     ).pack(side=tk.LEFT, padx=10)
 
-    # 绑定回车键
+    # 绑定回车键和关闭按钮（X）
     dialog.bind('<Return>', lambda e: on_confirm())
     dialog.bind('<Escape>', lambda e: on_cancel())
+    dialog.protocol("WM_DELETE_WINDOW", on_cancel)
 
     dialog.wait_window()
     return result
@@ -619,18 +629,53 @@ class UploadApp:
             )
 
 
+def _trace(msg, log_path):
+    """追踪启动步骤写入日志文件"""
+    import datetime
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.datetime.now().strftime('%H:%M:%S.%f')}] {msg}\n")
+    except Exception:
+        pass
+
+
 def main():
+    import tempfile
+    _log = os.path.join(get_exe_dir(), "imgup_trace.log")
+    # 备用路径
+    try:
+        open(_log, "a").close()
+    except OSError:
+        _log = os.path.join(tempfile.gettempdir(), "imgup_trace.log")
+
+    # 清空旧的追踪日志
+    try:
+        open(_log, "w").close()
+    except OSError:
+        pass
+
+    _trace("main() 开始", _log)
+
+    # 先创建 Tk 主窗口（确保所有 messagebox 调用有根窗口）
+    _trace("创建 tk.Tk()", _log)
     root = tk.Tk()
-    root.withdraw()
+    _trace("root.withdraw()", _log)
+    root.withdraw()  # 初始隐藏，配置完成后再显示
     set_window_icon(root)
 
-    # 加载配置
+    # 加载配置（此时 Tk 已初始化，messagebox 可以正常工作）
+    _trace("load_config()", _log)
     config = load_config()
+    _trace(f"config loaded: placeholder={is_placeholder_config(config)}", _log)
 
     # 检查是否为首次启动或配置为占位符
     if is_placeholder_config(config):
+        _trace("显示配置向导", _log)
         setup_result = show_first_time_setup(root)
+        _trace(f"配置向导结果: cancelled={setup_result['cancelled']} url={setup_result['url']}", _log)
+
         if setup_result["cancelled"]:
+            _trace("用户取消，退出", _log)
             root.destroy()
             sys.exit(0)
 
@@ -641,12 +686,18 @@ def main():
                 "version": "1.0"
             }
             save_config(config)
+            _trace("配置已保存", _log)
 
     # 启动主界面
+    _trace("创建 UploadApp", _log)
     UploadApp(root, config)
+    _trace("root.deiconify()", _log)
     root.deiconify()
     root.lift()
+    root.focus_force()
+    _trace("进入 mainloop()", _log)
     root.mainloop()
+    _trace("mainloop() 已退出", _log)
 
 
 if __name__ == "__main__":

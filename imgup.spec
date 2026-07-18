@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['upload_gui_standalone.py'],
+    ['imgup_cli.py'],
     pathex=[],
     binaries=[],
-    datas=[('imgup.png', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -23,17 +23,17 @@ exe = EXE(
     a.datas,
     [],
     name='imgup',
-    icon='imgup.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
+    runtime_tmpdir='%LOCALAPPDATA%\\imgup_tmp',
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['imgup.ico'],
 )
