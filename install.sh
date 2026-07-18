@@ -118,7 +118,16 @@ $DOMAIN {
     encode gzip zstd
 
     handle /upload {
-        reverse_proxy 127.0.0.1:$PORT
+        request_body {
+            max_size 20MB
+        }
+        reverse_proxy 127.0.0.1:$PORT {
+            transport http {
+                read_timeout  60s
+                write_timeout 60s
+                response_header_timeout 60s
+            }
+        }
     }
 
     handle {
