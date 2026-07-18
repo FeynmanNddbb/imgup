@@ -10,11 +10,30 @@ TOKEN="${IMGUP_TOKEN:-change_me_please}"
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
+normalize_url() {
+    local url="$1"
+    url="${url#"${url%%[![:space:]]*}"}"
+    url="${url%"${url##*[![:space:]]}"}"
+    url="${url%/}"
+
+    if [[ "$url" != http://* && "$url" != https://* ]]; then
+        url="https://$url"
+    fi
+
+    if [[ "$url" != */upload ]]; then
+        url="$url/upload"
+    fi
+
+    printf '%s' "$url"
+}
+
+UPLOAD_URL="$(normalize_url "$UPLOAD_URL")"
+
 usage() {
     echo -e "${BOLD}imgup${NC} — quick image uploader"
     echo ""
     echo -e "  ${CYAN}Usage:${NC}   $0 <image> [image2] ..."
-    echo -e "  ${CYAN}Env:${NC}     IMGUP_URL   upload endpoint  (default: $UPLOAD_URL)"
+    echo -e "  ${CYAN}Env:${NC}     IMGUP_URL   domain or upload endpoint  (default: $UPLOAD_URL)"
     echo -e "           IMGUP_TOKEN token for auth    (default: set in script)"
     echo ""
     echo -e "  ${CYAN}Example:${NC} $0 screenshot.png photo.jpg"

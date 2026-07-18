@@ -9,6 +9,8 @@ CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
 INSTALL_DIR="/opt/imgup"
 SERVICE_FILE="/etc/systemd/system/imgup.service"
+RELOAD_SERVICE_FILE="/etc/systemd/system/imgup-config-reload.service"
+RELOAD_PATH_FILE="/etc/systemd/system/imgup-config-reload.path"
 
 echo -e "${BOLD}"
 echo "  ██╗███╗   ███╗ ██████╗ ██╗   ██╗██████╗ "
@@ -28,11 +30,15 @@ echo ""
 read -rp "Upload directory       [/data/images]: " UPLOAD_DIR
 UPLOAD_DIR="${UPLOAD_DIR:-/data/images}"
 
-echo -ne "Base URL ${RED}(必填)${NC} [https://images.example.com]: "
+echo -ne "Base URL ${RED}(必填，可不带 https://)${NC} [images.example.com]: "
 read -r BASE_URL
-BASE_URL="${BASE_URL:-https://images.example.com}"
+BASE_URL="${BASE_URL:-images.example.com}"
 # 去掉尾部斜杠
 BASE_URL="${BASE_URL%/}"
+# 未输入协议时默认使用 HTTPS
+if [[ "$BASE_URL" != http://* && "$BASE_URL" != https://* ]]; then
+    BASE_URL="https://$BASE_URL"
+fi
 # 提取纯域名（去掉协议头）
 DOMAIN="${BASE_URL#https://}"
 DOMAIN="${DOMAIN#http://}"
@@ -77,8 +83,36 @@ PrivateTmp=true
 WantedBy=multi-user.target
 EOF
 
+cat > "$RELOAD_SERVICE_FILE" <<EOF
+[Unit]
+Description=Reload imgup after service config changes
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl daemon-reload
+ExecStart=/bin/systemctl restart imgup.service
+EOF
+
+cat > "$RELOAD_PATH_FILE" <<EOF
+[Unit]
+Description=Watch imgup service config changes
+
+[Path]
+PathChanged=$SERVICE_FILE
+Unit=imgup-config-reload.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 systemctl daemon-reload
-systemctl enable --now imgup.service
+systemctl enable imgup.service >/dev/null
+systemctl enable --now imgup-config-reload.path >/dev/null
+if systemctl is-active --quiet imgup.service; then
+    systemctl restart imgup.service
+else
+    systemctl start imgup.service
+fi
 
 # ─── Configure web server ────────────────────────────────────────────────────
 echo -e "${CYAN}[4/5]${NC} Configuring web server..."
