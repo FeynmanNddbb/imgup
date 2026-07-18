@@ -7,6 +7,12 @@
 # 本地生成的配置覆盖文件
 imgup.service.local
 config.local.*
+imgup_config.json
+
+# PyInstaller 打包产物
+build/
+dist/
+*.spec
 
 # 上传的图片数据目录（通常在服务器上，不应入库）
 uploads/
