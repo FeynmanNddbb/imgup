@@ -37,18 +37,17 @@ def parse_multipart(rfile, content_type: str, content_length: int):
     raw = rfile.read(min(content_length, MAX_SIZE + 1024))
     # Build a minimal email message for multipart parsing
     msg_bytes = f"Content-Type: {content_type}\r\n\r\n".encode() + raw
-    parser = email.parser.BytesParser(policy=email.policy.compat32)
+    parser = email.parser.BytesParser(policy=email.policy.default)
     msg = parser.parsebytes(msg_bytes)
 
     fields = {}
-    for part in msg.get_payload():
-        disposition = part.get("Content-Disposition", "")
-        name_match = re.search(r'name="([^"]*)"', disposition)
-        if not name_match:
+    for part in msg.iter_parts():
+        if part.get_content_disposition() != "form-data":
             continue
-        field_name = name_match.group(1)
-        filename_match = re.search(r'filename="([^"]*)"', disposition)
-        filename = filename_match.group(1) if filename_match else None
+        field_name = part.get_param("name", header="content-disposition")
+        if not field_name:
+            continue
+        filename = part.get_filename()
         payload = part.get_payload(decode=True)
         fields[field_name] = {"data": payload, "filename": filename}
     return fields
